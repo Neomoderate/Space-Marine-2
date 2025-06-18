@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SM2 Assault Perk Builder Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: #13191e; color: #fff; font-family: system-ui, Arial; margin: 0; padding: 0; }
+    h1 { text-align: center; margin: 1.5rem 0 0.2rem; font-size: 1.6rem; }
+    .section { max-width: 800px; margin: 2rem auto; background: #1a222b; padding: 1.5rem 1.2rem 2rem; border-radius: 1.1rem; box-shadow: 0 0 15px #0005;}
+    .perk-row { display: flex; gap: 1rem; margin-bottom: 1.3rem; align-items: flex-start; }
+    .perk-col { flex: 1; }
+    .perk-slot { font-weight: bold; margin-bottom: .6em; text-transform: uppercase; letter-spacing: 0.06em;}
+    .perk-grid { display: flex; gap: 0.8em; flex-wrap: wrap;}
+    .perk-btn {
+      display: flex; flex-direction: column; align-items: center;
+      background: #223; border: 2.5px solid #334; border-radius: 20px;
+      padding: 13px 11px 7px 11px; cursor: pointer; min-width: 70px; transition: .15s;
+      filter: drop-shadow(0 0 4px #111);
+    }
+    .perk-btn.selected { border-color: #FFD600; background: #232b3e; box-shadow: 0 0 8px #f9c22b66;}
+    .perk-icon { font-size: 2.0em; margin-bottom: .35em;}
+    .perk-name { font-size: .99em; text-align: center;}
+    .summary { margin: 1.3em 0 0; background: #212d35; border-radius: 8px; padding: 1em;}
+    @media (max-width: 600px) {
+      .section { padding: .7rem .1rem 1.2rem;}
+      .perk-row { flex-direction: column; gap: .5rem;}
+      .perk-grid { gap: .5em;}
+    }
+  </style>
+</head>
+<body>
+<h1>Space Marine 2 – Assault Perk Builder</h1>
+<div class="section">
+  <div class="perk-row">
+    <div class="perk-col">
+      <div class="perk-slot">Core <span style="font-weight:normal">(Pick 3)</span></div>
+      <div class="perk-grid" id="coreGrid"></div>
+    </div>
+    <div class="perk-col">
+      <div class="perk-slot">Gear <span style="font-weight:normal">(Pick 1)</span></div>
+      <div class="perk-grid" id="gearGrid"></div>
+    </div>
+    <div class="perk-col">
+      <div class="perk-slot">Signature <span style="font-weight:normal">(Pick 1)</span></div>
+      <div class="perk-grid" id="sigGrid"></div>
+    </div>
+  </div>
+  <div class="summary">
+    <div><b>Selected Perks:</b></div>
+    <div id="summary"></div>
+  </div>
+</div>
+<script>
+// Demo perk set with placeholder "icons" (swap with real image URLs for production)
+const assaultPerks = {
+  Core: [
+    { name: "Winged Fury", icon: "🦅", desc: "+25% light" },
+    { name: "Hammer of Wrath", icon: "🔨", desc: "+15% heavy" },
+    { name: "Unyielding Oath", icon: "🛡️", desc: "DR bonus" },
+    { name: "Fortified Parry", icon: "⚔️", desc: "+10% all" },
+    { name: "Devastating Hammer", icon: "💥", desc: "+20% heavy" },
+    { name: "Bloodlust", icon: "🩸", desc: "+8% light" },
+    { name: "Relentless", icon: "🔥", desc: "+10% heavy" }
+  ],
+  Gear: [
+    { name: "Armor Reinforcement", icon: "🦾", desc: "Armor up" },
+    { name: "Reinforced Pistons", icon: "🔧", desc: "+5% heavy" },
+    { name: "Overcharge", icon: "⚡", desc: "+5% light" },
+    { name: "Jump Spark", icon: "💫", desc: "Faster recharge" }
+  ],
+  Signature: [
+    { name: "Wings of Flame", icon: "🔥", desc: "+10% light" },
+    { name: "Consecutive Execution", icon: "💣", desc: "+15% heavy" },
+    { name: "Astartes Valor", icon: "🏅", desc: "Team buff" }
+  ]
+};
+// Perk selection logic
+let selected = { Core: [], Gear: [], Signature: [] };
+const MAX = { Core: 3, Gear: 1, Signature: 1 };
+
+function renderPerkGrid(slot) {
+  const grid = document.getElementById(slot.toLowerCase() + 'Grid');
+  grid.innerHTML = '';
+  assaultPerks[slot].forEach((perk, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'perk-btn' + (selected[slot].includes(i) ? ' selected' : '');
+    btn.innerHTML = `<div class="perk-icon">${perk.icon}</div><div class="perk-name">${perk.name}<br><span style="font-size:.9em;opacity:.66;">${perk.desc}</span></div>`;
+    btn.onclick = function() {
+      if (selected[slot].includes(i)) {
+        selected[slot] = selected[slot].filter(idx => idx !== i);
+      } else if (selected[slot].length < MAX[slot]) {
+        selected[slot].push(i);
+      }
+      renderAll();
+    }
+    grid.appendChild(btn);
+  });
+}
+
+function renderSummary() {
+  let text = '';
+  ['Core','Gear','Signature'].forEach(slot => {
+    text += `<b>${slot}:</b> `;
+    if(selected[slot].length === 0) text += "<i>None</i>";
+    else text += selected[slot].map(i => {
+      const p = assaultPerks[slot][i];
+      return `<span title="${p.desc}">${p.icon} ${p.name}</span>`;
+    }).join(', ');
+    text += "<br>";
+  });
+  document.getElementById('summary').innerHTML = text;
+}
+
+function renderAll() {
+  renderPerkGrid('Core');
+  renderPerkGrid('Gear');
+  renderPerkGrid('Signature');
+  renderSummary();
+}
+
+renderAll();
+</script>
+</body>
+</html>
