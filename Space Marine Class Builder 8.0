@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SM2 Ultimate Class Builder (All Features)</title>
+  <style>
+    :root { --bg:#101418; --fg:#e6e7e9; --accent:#0a7fff; --card:#1b1f24; }
+    body{margin:0;font-family:system-ui,Arial;min-height:100vh;background:var(--bg);color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:1rem;gap:.75rem}
+    h1{font-size:1.4rem;text-align:center;margin:.2rem 0;}
+    .panel{width:100%;max-width:980px;background:var(--card);padding:1rem 1.2rem 2rem 1.2rem;border-radius:.75rem;box-shadow:0 0 10px #0008}
+    select,button,input[type=text]{width:100%;padding:.6rem;border-radius:.45rem;border:1px solid var(--accent);background:#000;color:var(--fg);font-size:1rem;margin:.3rem 0}
+    .row{display:flex;gap:1rem;margin:.5rem 0;}
+    .half{flex:1;}
+    table{width:100%;border-collapse:collapse;margin-top:.6rem}
+    th,td{border:1px solid var(--accent);padding:.45rem;text-align:left;font-size:.95rem}
+    .stars{color:gold}
+    .damage{display:flex;gap:1.5rem;margin-top:.7rem;font-size:1.1rem;align-items:center}
+    .toggle{position:fixed;top:.6rem;right:.6rem;background:var(--accent);border:none;border-radius:50%;width:2.5rem;height:2.5rem;font-size:1.2rem;color:#fff;cursor:pointer;z-index:99}
+    .light{--bg:#f4f6f8;--fg:#111;--accent:#0059ff;--card:#ffffff}
+    .barwrap{flex:1;display:flex;align-items:center;height:1.5em;}
+    .bar{height:1em;border-radius:.6em;min-width:2em}
+    .bar.light{background:#19b4ff99}
+    .bar.heavy{background:#ff891a99}
+    .save{margin:.5rem 0 1.2rem 0;}
+    .note{font-size:.95em;color:#97e}
+    .diff{background:#202030;color:#ffc;padding:.6em .9em;margin:.7em 0 .7em 0;border-radius:.7em}
+    .perkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.2em .9em}
+    .perkopt{margin:.1em 0 .2em .2em;}
+  </style>
+</head>
+<body>
+<button class="toggle" title="Toggle theme">🌓</button>
+<h1>Space Marine 2 – Ultimate Class Builder <br><small id="patch"></small></h1>
+
+<div class="panel">
+  <div class="row">
+    <select id="classSel" class="half"></select>
+    <select id="buildSel" class="half"></select>
+  </div>
+  <div id="meta" class="row" style="justify-content:space-between;font-size:1rem">
+    <div>Ease: <span id="ease" class="stars"></span></div>
+    <div>Effectiveness: <span id="effect" class="stars"></span></div>
+  </div>
+  <div id="customGrid" style="display:none;margin-bottom:.7em"></div>
+  <div id="customWeapons" style="display:none;margin-bottom:.7em"></div>
+  <table>
+    <thead><tr><th>Slot</th><th>Perks</th></tr></thead>
+    <tbody id="perkBody"></tbody>
+  </table>
+  <h3 style="margin:.8rem 0 .2rem">Weapons</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Name</th></tr></thead>
+    <tbody id="weapBody"></tbody>
+  </table>
+  <div class="damage">
+    <div>Light DPS: <strong id="dpsLight">—</strong></div>
+    <div class="barwrap"><div id="barLight" class="bar light"></div></div>
+    <div>Heavy DPS: <strong id="dpsHeavy">—</strong></div>
+    <div class="barwrap"><div id="barHeavy" class="bar heavy"></div></div>
+  </div>
+  <div class="save">
+    <button onclick="saveBuild()">Save/Share</button>
+    <button onclick="loadBuild()">Import Build</button>
+    <input id="buildCode" type="text" placeholder="Paste code or share code" style="margin-top:.5em"/>
+  </div>
+  <div id="buildNote" class="note"></div>
+  <div id="patchDiff" class="diff" style="display:none"></div>
+</div>
+
+<script>
+const PATCH = "8.0";
+const PATCH_DIFF = "Patch 8.0: Thunder Hammer rebalanced, Auspex Scan moved to Core, several perk buffs/nerfs. See patch notes for full details.";
+const ALL_PERKS = {
+  Assault: {
+    Core: [
+      "Winged Fury(+25% light)","Hammer of Wrath(+15% heavy)","Unyielding Oath",
+      "Fortified Parry(+10% all)","Devastating Hammer(+20% heavy)","Bloodlust(+8% light)","Relentless(+10% heavy)"
+    ],
+    Gear: [
+      "Armor Reinforcement","Reinforced Pistons(+5% heavy)","Overcharge(+5% light)","Jump Spark"
+    ],
+    Signature: [
+      "Wings of Flame(+10% light)","Consecutive Execution(+15% heavy)","Astartes Valor"
+    ]
+  },
+  Tactical: {
+    Core: [
+      "Balanced Distribution(+15% light)","Final Shot(+10% heavy)","Auspex Scan(+10% light)","Reactive Parry(+10% all)","Secure Stockpile"
+    ],
+    Gear: [
+      "Steady Aim(+5% light)","Priority Targeting(+5% heavy)","Expert Timing","Radiating Impact"
+    ],
+    Signature: [
+      "Emperor’s Vengeance","Emperor’s Judgement"
+    ]
+  },
+  Vanguard: {
+    Core: [
+      "Moving Target(+10% light)","Retribution(+10% heavy)","Swift Strikes(+8% light)","Agile Assault"
+    ],
+    Gear: [
+      "Adrenal Surge","Mobile Assault"
+    ],
+    Signature: [
+      "Strike from Above"
+    ]
+  },
+  Bulwark: {
+    Core: [
+      "Forward Momentum","Concussive Force(+20% heavy)","Merciless Resolve(+10% light)","Resilient Bastion"
+    ],
+    Gear: [
+      "Focused Restoration"
+    ],
+    Signature: [
+      "Bulwark Smash"
+    ]
+  },
+  Heavy: {
+    Core: [
+      "Honed Precision(+15% light)","Bonds of Brotherhood","Relentless Rate(+12% light)","Overcharged Rounds(+15% heavy)"
+    ],
+    Gear: [
+      "Overcharged Rounds(+15% heavy)","Expert Loader"
+    ],
+    Signature: [
+      "Suppressive Barrage"
+    ]
+  },
+  Sniper: {
+    Core: [
+      "Precision Targeting(+25% heavy)","Dexterous Hands","Long Shot"
+    ],
+    Gear: [
+      "Efficient Readiness","Purification","Targeted Shot"
+    ],
+    Signature: [
+      "Evasion"
+    ]
+  }
+};
+
+const ALL_WEAPONS = {
+  Assault: {
+    Primary: ["Thunder Hammer","Chainsword"],
+    Secondary: ["Heavy Bolt Pistol","Bolt Pistol"]
+  },
+  Tactical: {
+    Primary: ["Heavy Bolt Rifle","Bolt Rifle"],
+    Secondary: ["Melta Pistol","Bolt Pistol"]
+  },
+  Vanguard: {
+    Primary: ["Power Sword","Chainsword"],
+    Secondary: ["Bolt Pistol"]
+  },
+  Bulwark: {
+    Primary: ["Shield & Hammer"],
+    Secondary: ["Bolt Pistol"]
+  },
+  Heavy: {
+    Primary: ["Heavy Bolter","Flamer"],
+    Secondary: ["Flamer","Bolt Pistol"]
+  },
+  Sniper: {
+    Primary: ["Stalker Bolter"],
+    Secondary: ["Bolt Pistol"]
+  }
+};
+
+const META_BUILDS = {
+  Assault: [
+    {
+      name:"Dash Melee", ease:4, effect:5,
+      perks:{
+        Core:["Winged Fury(+25% light)","Hammer of Wrath(+15% heavy)","Unyielding Oath"],
+        Gear:["Armor Reinforcement"],
+        Signature:["Wings of Flame(+10% light)"]
+      },
+      weapons:{Primary:"Thunder Hammer",Secondary:"Heavy Bolt Pistol",base:{light:350,heavy:600}},
+      note:"Best for clearing large packs with mobility."
+    },
+    {
+      name:"Block Hammer", ease:3, effect:4,
+      perks:{Core:["Fortified Parry(+10% all)","Devastating Hammer(+20% heavy)"],Gear:[],Signature:[]},
+      weapons:{Primary:"Thunder Hammer",Secondary:"Bolt Pistol",base:{light:300,heavy:650}},
+      note:"Great for survivability and dueling elite enemies."
+    }
+  ],
+  Tactical: [
+    {
+      name:"Horde Rifle", ease:5, effect:4,
+      perks:{
+        Core:["Balanced Distribution(+15% light)","Final Shot(+10% heavy)"],
+        Gear:["Steady Aim(+5% light)","Priority Targeting(+5% heavy)"],
+        Signature:["Emperor’s Vengeance"]
+      },
+      weapons:{Primary:"Heavy Bolt Rifle",Secondary:"Melta Pistol",base:{light:280,heavy:520}},
+      note:"Ideal for ranged horde control."
+    },
+    {
+      name:"Auspex Parry", ease:4, effect:3.5,
+      perks:{Core:["Auspex Scan(+10% light)","Reactive Parry(+10% all)"],Gear:[],Signature:["Emperor’s Judgement"]},
+      weapons:{Primary:"Bolt Rifle",Secondary:"Bolt Pistol",base:{light:260,heavy:480}},
+      note:"Flexible defense with moderate DPS."
+    }
+  ],
+  Vanguard: [
+    {
+      name:"Grapnel Diver", ease:4, effect:3.5,
+      perks:{Core:["Moving Target(+10% light)","Retribution(+10% heavy)"],Gear:["Adrenal Surge"],Signature:["Strike from Above"]},
+      weapons:{Primary:"Power Sword",Secondary:"Bolt Pistol",base:{light:320,heavy:450}},
+      note:"Hit-and-run style, high mobility."
+    }
+  ],
+  Bulwark: [
+    {
+      name:"Shield Crusher", ease:3.5, effect:4,
+      perks:{Core:["Concussive Force(+20% heavy)","Merciless Resolve(+10% light)"],Gear:["Focused Restoration"],Signature:["Bulwark Smash"]},
+      weapons:{Primary:"Shield & Hammer",Secondary:"Bolt Pistol",base:{light:250,heavy:700}},
+      note:"Frontline defense, excels at holding ground."
+    }
+  ],
+  Heavy: [
+    {
+      name:"Bolter Wall", ease:3.5, effect:4.5,
+      perks:{Core:["Honed Precision(+15% light)","Overcharged Rounds(+15% heavy)"],Gear:[],Signature:["Suppressive Barrage"]},
+      weapons:{Primary:"Heavy Bolter",Secondary:"Flamer",base:{light:300,heavy:550}},
+      note:"Crowd suppression with strong area damage."
+    }
+  ],
+  Sniper: [
+    {
+      name:"Cloaked Headshot", ease:2.5, effect:3,
+      perks:{Core:["Precision Targeting(+25% heavy)"],Gear:[],Signature:["Evasion"]},
+      weapons:{Primary:"Stalker Bolter",Secondary:"Bolt Pistol",base:{light:200,heavy:650}},
+      note:"Long-range precision; not for frontline."
+    }
+  ]
+};
+
+// Helper functions
+function star(n){return "★".repeat(Math.round(n));}
+function parseMod(p){const m=p.match(/([+-]?\\d+)%/);return m?parseInt(m[1])/100:0;}
+function calcDPS(base,perks){
+  let l=base.light, h=base.heavy;
+  (perks||[]).flat().forEach(p=>{
+    const m=parseMod(p); if(!m)return;
+    if(/light/i.test(p)&&!/heavy/i.test(p)) l+=l*m;
+    else if(/heavy/i.test(p)&&!/light/i.test(p)) h+=h*m;
+    else { l+=l*m; h+=h*m; }
+  });
+  return {light:Math.round(l), heavy:Math.round(h)};
+}
+
+const el={
+  classSel:document.getElementById('classSel'),
+  buildSel:document.getElementById('buildSel'),
+  ease:document.getElementById('ease'),
+  effect:document.getElementById('effect'),
+  perkBody:document.getElementById('perkBody'),
+  weapBody:document.getElementById('weapBody'),
+  dpsLight:document.getElementById('dpsLight'),
+  dpsHeavy:document.getElementById('dpsHeavy'),
+  barLight:document.getElementById('barLight'),
+  barHeavy:document.getElementById('barHeavy'),
+  buildNote:document.getElementById('buildNote'),
+  customGrid:document.getElementById('customGrid'),
+  customWeapons:document.getElementById('customWeapons'),
+  patch:document.getElementById('patch'),
+  patchDiff:document.getElementById('patchDiff'),
+  buildCode:document.getElementById('buildCode')
+};
+
+// State
+let currentClass = "Assault";
+let customMode = false;
+let customBuild = {};
+function setCustomDefaults(cls){
+  customBuild = {Core:[],Gear:[],Signature:[],Primary:ALL_WEAPONS[cls].Primary[0],Secondary:ALL_WEAPONS[cls].Secondary[0],base:{light:300,heavy:500}};
+}
+function renderClassSel(){
+  el.classSel.innerHTML = Object.keys(META_BUILDS).map(c=>`<option${c===currentClass?" selected":""}>${c}</option>`).join('');
+}
+function renderBuildSel(){
+  let opts = META_BUILDS[currentClass].map((b,i)=>`<option value='${i}'>${b.name}</option>`);
+  opts.push("<option value='custom'>Custom Build</option>");
+  el.buildSel.innerHTML = opts.join('');
+}
+function renderBuild(idx){
+  customMode = (idx==="custom");
+  let build = !customMode ? META_BUILDS[currentClass][idx] : null;
+  let perks = build ? build.perks : customBuild;
+  let weapons = build ? build.weapons : customBuild;
+  let note = build ? build.note : "Pick any combination of perks and weapons!";
+  let ease = build ? build.ease : "";
+  let effect = build ? build.effect : "";
+
+  el.ease.textContent = ease ? star(ease) : "-";
+  el.effect.textContent = effect ? star(effect) : "-";
+  el.buildNote.textContent = note||"";
+
+  // Perks table
+  el.perkBody.innerHTML = "";
+  ["Core","Gear","Signature"].forEach(slot=>{
+    let arr = (perks&&perks[slot]) ? perks[slot] : [];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${slot}</td><td>${arr.join(', ')||'—'}</td>`;
+    el.perkBody.appendChild(tr);
+  });
+
+  // Weapons table
+  el.weapBody.innerHTML = `<tr><td>Primary</td><td>${weapons.Primary}</td></tr><tr><td>Secondary</td><td>${weapons.Secondary}</td></tr>`;
+
+  // DPS + bars
+  let d = calcDPS(weapons.base, Object.values(perks));
+  el.dpsLight.textContent = d.light; el.dpsHeavy.textContent = d.heavy;
+  el.barLight.style.width = (d.light/6)+"%"; el.barHeavy.style.width = (d.heavy/8)+"%";
+  el.barLight.textContent = d.light ? "█" : ""; el.barHeavy.textContent = d.heavy ? "█" : "";
+
+  // Custom UI
+  el.customGrid.style.display = customMode ? "" : "none";
+  el.customWeapons.style.display = customMode ? "" : "none";
+  if(customMode) renderCustomUI();
+}
+
+function renderCustomUI(){
+  // Perks
+  el.customGrid.innerHTML = "";
+  ["Core","Gear","Signature"].forEach(slot=>{
+    let grid = `<div class='perkgrid'><b>${slot}:</b>`;
+    (ALL_PERKS[currentClass][slot]||[]).forEach(p=>{
+      let checked = customBuild[slot].includes(p) ? "checked" : "";
+      grid += `<label class='perkopt'><input type='checkbox' data-slot='${slot}' value="${p}" ${checked}/> ${p}</label>`;
+    });
+    grid += "</div>";
+    el.customGrid.innerHTML += grid;
+  });
+  // Weapon pickers
+  el.customWeapons.innerHTML =
+    `<div class='row'>
+      <div class='half'>
+        <label>Primary:
+          <select id='customPrimary'>
+            ${ALL_WEAPONS[currentClass].Primary.map(w=>`<option${w===customBuild.Primary?" selected":""}>${w}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+      <div class='half'>
+        <label>Secondary:
+          <select id='customSecondary'>
+            ${ALL_WEAPONS[currentClass].Secondary.map(w=>`<option${w===customBuild.Secondary?" selected":""}>${w}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+    </div>`;
+
+  // Perk events
+  el.customGrid.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.onchange = function(){
+      let arr = customBuild[this.dataset.slot];
+      if(this.checked) arr.push(this.value);
+      else customBuild[this.dataset.slot] = arr.filter(v=>v!==this.value);
+      renderBuild('custom');
+    }
+  });
+  // Weapon events
+  document.getElementById('customPrimary').onchange = function(){
+    customBuild.Primary = this.value;
+    renderBuild('custom');
+  };
+  document.getElementById('customSecondary').onchange = function(){
+    customBuild.Secondary = this.value;
+    renderBuild('custom');
+  };
+}
+
+function onClassChange() {
+  currentClass = el.classSel.value;
+  setCustomDefaults(currentClass);
+  renderBuildSel();
+  renderBuild(0);
+}
+
+el.classSel.onchange = onClassChange;
+el.buildSel.onchange = function(){
+  let idx = el.buildSel.value;
+  if(idx==="custom") renderBuild("custom");
+  else renderBuild(Number(idx));
+};
+
+function saveBuild(){
+  let code, mode = (el.buildSel.value==="custom");
+  if(!mode){
+    code = [currentClass,el.buildSel.value].join("|");
+  } else {
+    code = [currentClass,"c",
+      customBuild.Core.map(encodeURIComponent).join(","),
+      customBuild.Gear.map(encodeURIComponent).join(","),
+      customBuild.Signature.map(encodeURIComponent).join(","),
+      encodeURIComponent(customBuild.Primary),
+      encodeURIComponent(customBuild.Secondary)
+    ].join("|");
+  }
+  el.buildCode.value = code;
+  el.buildCode.select(); document.execCommand("copy");
+  alert("Build code copied! Share or save it.");
+}
+function loadBuild(){
+  let code = el.buildCode.value.trim();
+  if(!code) return alert("Paste a code!");
+  let [cls,mode,...rest] = code.split("|");
+  if(!META_BUILDS[cls] && !ALL_PERKS[cls]) return alert("Bad class.");
+  currentClass = cls;
+  renderClassSel();
+  if(mode!=="c"){
+    el.buildSel.value = mode;
+    renderBuild(mode);
+  } else {
+    setCustomDefaults(cls);
+    let [c,g,s,p,sec] = rest;
+    customBuild.Core = c?c.split(",").map(decodeURIComponent):[];
+    customBuild.Gear = g?g.split(",").map(decodeURIComponent):[];
+    customBuild.Signature = s?s.split(",").map(decodeURIComponent):[];
+    customBuild.Primary = p?decodeURIComponent(p):ALL_WEAPONS[cls].Primary[0];
+    customBuild.Secondary = sec?decodeURIComponent(sec):ALL_WEAPONS[cls].Secondary[0];
+    el.buildSel.value = "custom";
+    renderBuild("custom");
+  }
+  el.classSel.value = cls;
+}
+
+el.patch.textContent = `Patch ${PATCH}`;
+el.patchDiff.style.display = PATCH_DIFF ? "" : "none";
+el.patchDiff.textContent = PATCH_DIFF;
+
+document.querySelector('.toggle').onclick = ()=>document.body.classList.toggle('light');
+
+// ====== INIT ======
+function init(){
+  renderClassSel();
+  setCustomDefaults(currentClass);
+  renderBuildSel();
+  renderBuild(0);
+}
+init();
+</script>
+</body>
+</html>
