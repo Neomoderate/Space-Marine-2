@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warhammer 40,000: Space Marine 2 - Class Builder [v3.0 - Icon Update]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0c1014;
+            --secondary-bg: #111822;
+            --panel-bg: #0a0d10;
+            --border-color: #3a5a78;
+            --accent-gold: #c8a157;
+            --accent-blue: #63b0f0;
+            --text-primary: #d5dde4;
+            --text-secondary: #8a9eb2;
+            --font-main: 'Roboto Condensed', sans-serif;
+            --font-title: 'Orbitron', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 1em;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            border: 2px solid var(--border-color);
+            background: var(--secondary-bg);
+            box-shadow: 0 0 20px rgba(99, 176, 240, 0.2);
+        }
+
+        header {
+            text-align: center;
+            padding: 1em;
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        header h1 {
+            font-family: var(--font-title);
+            color: var(--accent-gold);
+            margin: 0;
+            letter-spacing: 3px;
+        }
+        
+        main {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 1em;
+            padding: 1em;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+        }
+
+        .right-column {
+            display: grid;
+            grid-template-areas:
+                "loadout perks"
+                "details perks"
+                "meta meta";
+            grid-template-columns: 1fr 1.5fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 1em;
+        }
+        
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 1em;
+        }
+
+        .panel-title {
+            font-family: var(--font-title);
+            color: var(--accent-gold);
+            margin: -1em -1em 1em -1em;
+            padding: 0.5em 1em;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.2);
+            font-size: 1.2em;
+        }
+
+        .class-selection .class-btn {
+            display: block;
+            width: 100%;
+            padding: 1em;
+            margin-bottom: 0.5em;
+            font-family: var(--font-title);
+            font-size: 1em;
+            background: var(--panel-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .class-selection .class-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .class-selection .class-btn.active {
+            background: var(--accent-gold);
+            color: var(--panel-bg);
+            border-color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .stat-panel .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5em;
+        }
+        .stat-panel .stat-name { color: var(--text-secondary); }
+        .stat-panel .stat-value { color: var(--accent-blue); font-weight: bold; }
+
+        .loadout-panel { grid-area: loadout; }
+        .selection-details-panel { grid-area: details; }
+        .perks-panel { grid-area: perks; }
+        .meta-build-panel { grid-area: meta; }
+
+        .dropdown-container { margin-bottom: 1em; }
+        .dropdown-container label {
+            display: block;
+            margin-bottom: 0.5em;
+            color: var(--text-secondary);
+        }
+        select {
+            width: 100%;
+            padding: 0.8em;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            font-family: var(--font-main);
+            font-size: 1em;
+        }
+
+        .perk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.8em;
+        }
+
+        .perk-item {
+            width: 60px;
+            height: 60px;
+            background-color: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            user-select: none;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        
+        .perk-item svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .perk-item:hover {
+            border-color: var(--accent-gold);
+        }
+        
+        .perk-item:hover svg {
+            fill: var(--accent-gold);
+        }
+        
+        .perk-item.selected {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        .perk-item.selected svg {
+            fill: var(--accent-blue);
+        }
+
+        .selection-details-panel #detail-icon {
+            width: 64px;
+            height: 64px;
+            float: left;
+            margin-right: 0.5em;
+            padding: 0;
+        }
+        .selection-details-panel #detail-icon svg {
+             fill: var(--accent-gold);
+        }
+        .selection-details-panel #detail-name {
+            font-family: var(--font-title);
+            color: var(--accent-gold);
+            font-size: 1.5em;
+        }
+        .selection-details-panel #detail-type {
+            color: var(--text-secondary);
+            margin-bottom: 1em;
+        }
+        .selection-details-panel #detail-description {
+            clear: both;
+        }
+        
+        .perks-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #perk-counter {
+            font-size: 1.2em;
+            color: var(--accent-blue);
+        }
+
+        .meta-builds-container {
+            display: flex;
+            gap: 1em;
+            overflow-x: auto;
+        }
+
+        .meta-build-card {
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            padding: 1em;
+            min-width: 250px;
+            flex-shrink: 0;
+        }
+        
+        .meta-build-card h4 {
+            font-family: var(--font-title);
+            color: var(--accent-gold);
+            margin-top: 0;
+        }
+        
+        .meta-build-card p {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .meta-build-card button {
+            width: 100%;
+            padding: 0.8em;
+            background: var(--accent-gold);
+            color: var(--panel-bg);
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-title);
+            transition: background-color 0.2s ease;
+        }
+
+        .meta-build-card button:hover {
+            background-color: #e3b65b;
+        }
+        
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            .left-column {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .class-selection .class-btn {
+                flex-grow: 1;
+            }
+            .stat-panel {
+                flex-grow: 1;
+                min-width: 250px;
+            }
+            .right-column {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "loadout"
+                    "perks"
+                    "details"
+                    "meta";
+            }
+            .meta-build-card {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>WARHAMMER 40,000: SPACE MARINE 2</h1>
+            <div id="subtitle" style="color: var(--text-secondary);">8.0 Patch Class Builder</div>
+        </header>
+
+        <main>
+            <div class="left-column">
+                <div class="panel class-selection">
+                    <div class="panel-title">SELECT CLASS</div>
+                    <button class="class-btn" data-class="Tactical">Tactical</button>
+                    <button class="class-btn" data-class="Assault">Assault</button>
+                    <button class="class-btn" data-class="Vanguard">Vanguard</button>
+                    <button class="class-btn" data-class="Bulwark">Bulwark</button>
+                    <button class="class-btn" data-class="Sniper">Sniper</button>
+                    <button class="class-btn" data-class="Heavy">Heavy</button>
+                </div>
+
+                <div class="panel stat-panel">
+                    <div class="panel-title">LIVE STATS</div>
+                    <div class="stat-item">
+                        <span class="stat-name">Health</span>
+                        <span class="stat-value" id="stat-health">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">Armour</span>
+                        <span class="stat-value" id="stat-armour">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">Melee Damage</span>
+                        <span class="stat-value" id="stat-melee-dmg">+0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">Ranged Damage</span>
+                        <span class="stat-value" id="stat-ranged-dmg">+0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-name">Cooldown Rate</span>
+                        <span class="stat-value" id="stat-cooldown">+0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="panel loadout-panel">
+                    <div class="panel-title">LOADOUT</div>
+                    <div class="dropdown-container">
+                        <label for="primary-weapon">Primary Weapon</label>
+                        <select id="primary-weapon"></select>
+                    </div>
+                    <div class="dropdown-container">
+                        <label for="secondary-weapon">Secondary Weapon</label>
+                        <select id="secondary-weapon"></select>
+                    </div>
+                    <div class="dropdown-container">
+                        <label for="melee-weapon">Melee Weapon</label>
+                        <select id="melee-weapon"></select>
+                    </div>
+                    <div class="dropdown-container">
+                        <label for="grenade">Grenade</label>
+                        <select id="grenade"></select>
+                    </div>
+                </div>
+
+                <div class="panel selection-details-panel">
+                     <div class="panel-title">SELECTION DETAILS</div>
+                     <div id="detail-icon" class="perk-item" style="border:none; cursor:default;"></div>
+                     <h3 id="detail-name">Select an Item</h3>
+                     <p id="detail-type">Hover over a perk or weapon to see its details.</p>
+                     <p id="detail-description"></p>
+                </div>
+                
+                <div class="panel perks-panel">
+                    <div class="perks-panel-header">
+                        <div class="panel-title">PERK SELECTION</div>
+                        <div id="perk-counter">Slots: 0 / 4</div>
+                    </div>
+                    <div class="perk-grid" id="perk-grid">
+                    </div>
+                </div>
+                
+                <div class="panel meta-build-panel">
+                    <div class="panel-title">META BUILD GUIDE (SIEGE MODE)</div>
+                    <div class="meta-builds-container" id="meta-builds-container">
+                        </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+// --- DATA STORE ---
+const db = {
+    icons: {
+        'health': `<svg viewBox="0 0 24 24"><path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z" /></svg>`,
+        'armour': `<svg viewBox="0 0 24 24"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z" /></svg>`,
+        'cooldown': `<svg viewBox="0 0 24 24"><path d="M13,6V11H18V13H11V6H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" /></svg>`,
+        'ammo': `<svg viewBox="0 0 24 24"><path d="M14,2H16V5H18V2H20V5H22V2H24V8H22V10H20V8H18V10H16V8H14V2M10,8H12V22H10V8M6,8H8V22H6V8M2,8H4V22H2V8Z" /></svg>`,
+        'grenade': `<svg viewBox="0 0 24 24"><path d="M12,2C9.24,2 7,4.24 7,7C7,9.76 9.24,12 12,12C14.76,12 17,9.76 17,7C17,4.24 14.76,2 12,2M11,13V15.5L10.5,16.5L11.5,17.5L12,17L12.5,17.5L13.5,16.5L13,15.5V13H11M6,19V22H18V19H6Z" /></svg>`,
+        'damage_up': `<svg viewBox="0 0 24 24"><path d="M9,20.42L10.41,21.83L12,20.25L13.59,21.83L15,20.42L13.41,18.83L15,17.25L13.59,15.83L12,17.42L10.41,15.83L9,17.25L10.59,18.83L9,20.42M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" /></svg>`,
+        'speed': `<svg viewBox="0 0 24 24"><path d="M13,4.07V1L8.45,5.55L13,10.1V6.09C16.31,6.5 18.9,9.44 18.9,12.81C18.9,16.18 16.31,19.12 13,19.53V21.53C17.42,21.11 20.9,17.38 20.9,12.81C20.9,8.24 17.42,4.5 13,4.07Z" /></svg>`,
+        'skull': `<svg viewBox="0 0 24 24"><path d="M12,2A9,9 0 0,0 3,11V22H21V11A9,9 0 0,0 12,2M8,11A2,2 0 0,1 10,13A2,2 0 0,1 8,15A2,2 0 0,1 6,13A2,2 0 0,1 8,11M16,11A2,2 0 0,1 18,13A2,2 0 0,1 16,15A2,2 0 0,1 14,13A2,2 0 0,1 16,11M12,16.5A3.5,3.5 0 0,1 8.5,20H7.5A4.5,4.5 0 0,0 12,20.5A4.5,4.5 0 0,0 16.5,20H15.5A3.5,3.5 0 0,1 12,16.5Z" /></svg>`,
+        'target': `<svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z" /></svg>`,
+        'bolt_rifle': `<svg viewBox="0 0 24 24"><path d="M20.5,13.5L22,12L18,8L16.5,9.5L18,11H3V13H18L16.5,14.5L18,16L20.5,13.5M6,6.5A1.5,1.5 0 0,1 4.5,8A1.5,1.5 0 0,1 3,6.5A1.5,1.5 0 0,1 4.5,5A1.5,1.5 0 0,1 6,6.5M6,17.5A1.5,1.5 0 0,1 4.5,19A1.5,1.5 0 0,1 3,17.5A1.5,1.5 0 0,1 4.5,16A1.5,1.5 0 0,1 6,17.5Z" /></svg>`,
+        'chainsword': `<svg viewBox="0 0 24 24"><path d="M5,3L8.5,6.5L7.5,7.5L4,4L3,5L6.5,8.5L5.5,9.5L2,6L1,7L4.5,10.5L3.5,11.5L1,9L0,10L3.5,13.5L2.5,14.5L0,12L2,14L1,15L4.5,18.5L3.5,19.5L0,16L2.5,18.5L1.5,19.5L7,21L12.5,15.5L18,21L21.5,17.5L16,12L21.5,6.5L18,3L12.5,8.5L7,3H5Z" /></svg>`,
+        'flamer': `<svg viewBox="0 0 24 24"><path d="M12.35,14.83C12.18,14.33 12,13.8 12,13.26C12,11.23 13.25,9.5 15.08,8.54C15.58,8.27 16.03,8.12 16.35,8.12C16.88,8.12 17.5,8.5 17.5,9.31C17.5,9.83 17.2,10.5 16.54,11.23C16.27,11.5 16,11.72 16,12C16,12.5 16.5,13 16.5,13C17.63,13 19.11,11.83 19.63,10.5C20.06,9.44 20.3,8.41 20.3,7.53C20.3,5.33 18.5,3.62 16.35,3.62C14.2,3.62 12.33,5.19 12.33,7.41C12.33,7.85 12.43,8.27 12.6,8.66L10,11.14V4.12H8V11.14L5.4,8.66C5.77,8.27 5.97,7.85 5.97,7.41C5.97,5.19 4.1,3.62 1.95,3.62C-0.2,3.62 -0.2,6.53 1.95,7.53C2.2,7.66 2.5,7.77 2.82,7.88C2.82,7.88 2.83,7.88 2.83,7.88C3.7,8.2 4.15,8.71 4.15,9.31C4.15,9.83 3.85,10.5 3.19,11.23C2.92,11.5 2.65,11.72 2.65,12C2.65,12.5 3.15,13 3.15,13H11.5V14.83C11.15,15.21 10.85,15.5 10.5,15.77C9.2,16.77 8,18.27 8,19.88H13.65C13.65,18.27 12.45,16.77 11.15,15.77C11.5,15.5 11.85,15.21 12.35,14.83Z" /></svg>`,
+        'power_fist': `<svg viewBox="0 0 24 24"><path d="M18,21H8V9H18M11,11V18H15V11M20,9H22V7H20M20,13H22V11H20M20,17H22V15H20M17,4V2H9V4H7V8H19V4H17Z" /></svg>`
+    },
+    classes: {
+        Tactical: { baseHealth: 100, baseArmour: 125, icon: 'T', perkSlots: 4, 
+            weapons: ["Bolt Rifle", "Stalker Bolter", "Plasma Gun", "Bolt Pistol", "Chainsword", "Combat Knife", "Frag Grenade", "Krak Grenade"] },
+        Assault: { baseHealth: 120, baseArmour: 100, icon: 'A', perkSlots: 4,
+            weapons: ["Bolt Pistol", "Hand Flamer", "Chainsword", "Power Axe", "Thunder Hammer", "Frag Grenade", "Melta Bomb"] },
+        Vanguard: { baseHealth: 110, baseArmour: 110, icon: 'V', perkSlots: 4,
+            weapons: ["Bolt Carbine", "Vindicator", "Bolt Pistol", "Power Sword", "Combat Knife", "Shock Grenade"] },
+        Bulwark: { baseHealth: 150, baseArmour: 200, icon: 'B', perkSlots: 4,
+            weapons: ["Storm Shield", "Heavy Flamer", "Power Maul", "Bolt Pistol", "Frag Grenade"] },
+        Sniper: { baseHealth: 90, baseArmour: 75, icon: 'S', perkSlots: 4,
+            weapons: ["Exitus Rifle", "Bolt Pistol", "Combat Knife", "Krak Grenade"] },
+        Heavy: { baseHealth: 130, baseArmour: 175, icon: 'H', perkSlots: 4,
+            weapons: ["Heavy Bolter", "Melta Gun", "Plasma Cannon", "Power Fist", "Bolt Pistol", "Krak Grenade"] }
+    },
+    weapons: {
+        "Bolt Rifle": { type: "Primary", rangedDmg: 5, icon: 'bolt_rifle', description: "Standard-issue, reliable rifle effective at most ranges." },
+        "Stalker Bolter": { type: "Primary", rangedDmg: 8, icon: 'bolt_rifle', description: "A scoped and silenced variant of the Bolt Rifle for precision shots." },
+        "Plasma Gun": { type: "Primary", rangedDmg: 12, icon: 'bolt_rifle', description: "Fires powerful projectiles of superheated plasma, effective against armoured targets." },
+        "Bolt Carbine": { type: "Primary", rangedDmg: 4, icon: 'bolt_rifle', description: "A lighter, more mobile version of the Bolt Rifle with a higher rate of fire." },
+        "Vindicator": { type: "Primary", rangedDmg: 10, icon: 'grenade', description: "Fires powerful explosive charges, excellent for clearing groups." },
+        "Heavy Flamer": { type: "Primary", rangedDmg: 7, icon: 'flamer', description: "Projects a torrent of burning promethium, ideal for horde control." },
+        "Exitus Rifle": { type: "Primary", rangedDmg: 25, icon: 'bolt_rifle', description: "A high-caliber sniper rifle capable of eliminating elite targets from extreme range." },
+        "Heavy Bolter": { type: "Primary", rangedDmg: 9, icon: 'ammo', description: "A heavy, rapid-firing weapon that lays down a devastating field of fire." },
+        "Melta Gun": { type: "Primary", rangedDmg: 20, icon: 'flamer', description: "Emits a blast of intense heat, melting through the thickest armour at close range." },
+        "Plasma Cannon": { type: "Primary", rangedDmg: 18, icon: 'damage_up', description: "A heavy weapon firing large, explosive balls of plasma." },
+        "Bolt Pistol": { type: "Secondary", icon: 'bolt_rifle', description: "A reliable sidearm for close-quarters encounters." },
+        "Hand Flamer": { type: "Secondary", icon: 'flamer', description: "A compact flamer that provides excellent close-range crowd control." },
+        "Chainsword": { type: "Melee", meleeDmg: 5, icon: 'chainsword', description: "A brutal weapon with monomolecular-edged teeth that chew through flesh and bone." },
+        "Combat Knife": { type: "Melee", meleeDmg: 2, icon: 'chainsword', description: "A swift and deadly blade for quick, precise strikes." },
+        "Power Axe": { type: "Melee", meleeDmg: 15, icon: 'chainsword', description: "An energized axe that cleaves through armour with ease." },
+        "Thunder Hammer": { type: "Melee", meleeDmg: 25, icon: 'power_fist', description: "A massive hammer that releases a devastating energy blast on impact." },
+        "Power Sword": { type: "Melee", meleeDmg: 12, icon: 'chainsword', description: "A finely balanced sword sheathed in a lethal energy field." },
+        "Storm Shield": { type: "Melee", armour: 50, icon: 'armour', description: "An indomitable shield that provides exceptional protection against all forms of attack." },
+        "Power Maul": { type: "Melee", meleeDmg: 10, icon: 'power_fist', description: "A blunt-force weapon whose impacts are augmented by a disruptive energy field." },
+        "Power Fist": { type: "Melee", meleeDmg: 20, icon: 'power_fist', description: "A slow but incredibly powerful fist that can tear through vehicle hulls." },
+        "Frag Grenade": { type: "Grenade", icon: 'grenade', description: "Standard fragmentation grenade, effective against infantry." },
+        "Krak Grenade": { type: "Grenade", icon: 'grenade', description: "An anti-armour grenade with a powerful shaped charge." },
+        "Melta Bomb": { type: "Grenade", icon: 'grenade', description: "A high-powered explosive used for breaching hulls and destroying heavy armour." },
+        "Shock Grenade": { type: "Grenade", icon: 'cooldown', description: "Releases an electromagnetic pulse that stuns enemies in a wide radius." }
+    },
+    perks: {
+        'U1': { name: "Enhanced Plating", description: "Increases total Armour by 25%.", armour: 25, icon: 'armour', class: 'All' },
+        'U2': { name: "Bio-Synthetic Glands", description: "Increases total Health by 25%.", health: 25, icon: 'health', class: 'All' },
+        'U3': { name: "Rapid Cooldown", description: "Reduces ability cooldowns by 15%.", cooldown: 15, icon: 'cooldown', class: 'All' },
+        'U4': { name: "Ammunition Pouch", description: "Carry 25% more ammunition for all ranged weapons.", icon: 'ammo', class: 'All' },
+        'U5': { name: "Grenadier", description: "Carry an additional grenade.", icon: 'grenade', class: 'All' },
+        'T1': { name: "Tactical Advance", description: "Gain a temporary 10% ranged damage boost after using your combat ability.", rangedDmg: 10, icon: 'damage_up', class: 'Tactical' },
+        'T2': { name: "Master of Arms", description: "Faster weapon switching and reloading.", icon: 'speed', class: 'Tactical' },
+        'A1': { name: "Furious Charge", description: "Melee kills grant a temporary 15% movement speed boost.", icon: 'speed', class: 'Assault' },
+        'A2': { name: "Death from Above", description: "Damage dealt while airborne is increased by 30%.", meleeDmg: 30, rangedDmg: 30, icon: 'skull', class: 'Assault' },
+        'V1': { name: "Infiltrator", description: "You are harder to detect by enemies and your footsteps are silent.", icon: 'skull', class: 'Vanguard' },
+        'V2': { name: "Weak Point Strike", description: "Attacks from behind deal +25% damage.", meleeDmg: 25, rangedDmg: 25, icon: 'target', class: 'Vanguard' },
+        'B1': { name: "Unstoppable", description: "You cannot be staggered or knocked back while your shield is raised.", icon: 'armour', class: 'Bulwark' },
+        'B2': { name: "Guardian's Wrath", description: "Blocking a heavy attack releases a concussive blast.", icon: 'damage_up', class: 'Bulwark' },
+        'S1': { name: "Headhunter", description: "Critical hits with sniper rifles deal +50% damage.", rangedDmg: 50, icon: 'target', class: 'Sniper' },
+        'S2': { name: "Ghost", description: "Remaining stationary for 3 seconds activates a cloaking field.", icon: 'skull', 'class': 'Sniper' },
+        'H1': { name: "Braced Stance", description: "Greatly increases accuracy and stability with heavy weapons when stationary.", icon: 'target', class: 'Heavy' },
+        'H2': { name: "Suppressing Fire", description: "Enemies hit by your heavy weapon fire are temporarily slowed.", icon: 'speed', class: 'Heavy' }
+    },
+    metaBuilds: {
+        'heavy_siegebreaker': {
+            title: "Siegebreaker",
+            class: 'Heavy',
+            primary: 'Heavy Bolter',
+            secondary: 'Bolt Pistol',
+            melee: 'Power Fist',
+            grenade: 'Krak Grenade',
+            perks: ['U4', 'H1', 'H2', 'U1'],
+            description: "The ultimate area denial build for Siege Mode. Use the Heavy Bolter with Braced Stance to create a killzone, while Suppressing Fire slows endless hordes. Extra ammo and armour ensure you can hold the line indefinitely."
+        },
+        'bulwark_torchbearer': {
+            title: "Torchbearer",
+            class: 'Bulwark',
+            primary: 'Heavy Flamer',
+            secondary: 'Bolt Pistol',
+            melee: 'Power Maul',
+            grenade: 'Frag Grenade',
+            perks: ['U1', 'U2', 'B2', 'U5'],
+            description: "A frontline bulwark that burns the swarm away. The Heavy Flamer clears paths through lesser Tyranids, while massive Health/Armour and Guardian's Wrath punish any large enemies that get too close. Extra grenades add to your clearing power."
+        },
+        'tactical_demolitions': {
+            title: "Demolitions Expert",
+            class: 'Tactical',
+            primary: 'Plasma Gun',
+            secondary: 'Bolt Pistol',
+            melee: 'Chainsword',
+            grenade: 'Krak Grenade',
+            perks: ['U5', 'T1', 'U3', 'U4'],
+            description: "This balanced build focuses on eliminating high-value targets and maintaining ammo economy. Use the Plasma Gun and Krak Grenades for armoured threats, relying on extra ammo and cooldown reduction to stay in the fight longer."
+        }
+    }
+};
+
+let currentClass = 'Tactical';
+let selectedPerks = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    selectClass('Tactical');
+    populateMetaBuilds();
+    
+    document.querySelectorAll('.class-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectClass(btn.dataset.class));
+    });
+
+    const loadoutPanel = document.querySelector('.loadout-panel');
+    loadoutPanel.addEventListener('change', e => {
+        if(e.target.tagName === 'SELECT') {
+            updateAll();
+        }
+    });
+    loadoutPanel.addEventListener('mouseover', e => {
+        if(e.target.tagName === 'SELECT') {
+            updateDetailsPanel(e.target.value, 'weapon');
+        }
+    });
+    
+    // Set initial details panel
+    const initialWeapon = document.getElementById('primary-weapon').value;
+    if(initialWeapon) {
+        updateDetailsPanel(initialWeapon, 'weapon');
+    }
+});
+
+
+function selectClass(className) {
+    currentClass = className;
+    selectedPerks = [];
+    
+    document.querySelectorAll('.class-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.class === className);
+    });
+
+    populateLoadout();
+    populatePerks();
+    updateAll();
+}
+
+function populateLoadout() {
+    const classData = db.classes[currentClass];
+    const weapons = classData.weapons;
+
+    const populate = (id, type) => {
+        const select = document.getElementById(id);
+        select.innerHTML = '';
+        const filteredWeapons = weapons.filter(w => db.weapons[w] && db.weapons[w].type === type);
+        filteredWeapons.forEach(w => {
+            const opt = document.createElement('option');
+            opt.value = w;
+            opt.innerHTML = w;
+            select.appendChild(opt);
+        });
+    };
+    
+    populate('primary-weapon', 'Primary');
+    populate('secondary-weapon', 'Secondary');
+    populate('melee-weapon', 'Melee');
+    populate('grenade', 'Grenade');
+}
+
+function populatePerks() {
+    const grid = document.getElementById('perk-grid');
+    grid.innerHTML = '';
+    
+    const availablePerks = Object.entries(db.perks).filter(([id, perk]) => perk.class === 'All' || perk.class === currentClass);
+
+    availablePerks.forEach(([id, perk]) => {
+        const item = document.createElement('div');
+        item.className = 'perk-item';
+        item.dataset.perkId = id;
+        item.innerHTML = db.icons[perk.icon] || '';
+        
+        item.addEventListener('click', () => {
+            togglePerk(id, item);
+            updateDetailsPanel(id, 'perk');
+        });
+        item.addEventListener('mouseover', () => updateDetailsPanel(id, 'perk'));
+        
+        grid.appendChild(item);
+    });
+}
+
+function populateMetaBuilds() {
+    const container = document.getElementById('meta-builds-container');
+    container.innerHTML = '';
+    Object.entries(db.metaBuilds).forEach(([id, build]) => {
+        const card = document.createElement('div');
+        card.className = 'meta-build-card';
+        card.innerHTML = `
+            <h4>${build.title}</h4>
+            <p><strong>Class:</strong> ${build.class}</p>
+            <p>${build.description}</p>
+            <button data-build-id="${id}">Load Build</button>
+        `;
+        container.appendChild(card);
+    });
+
+    document.querySelectorAll('.meta-build-card button').forEach(button => {
+        button.addEventListener('click', (e) => loadMetaBuild(e.target.dataset.buildId));
+    });
+}
+
+function loadMetaBuild(buildId) {
+    const build = db.metaBuilds[buildId];
+    if (!build) return;
+
+    selectClass(build.class);
+
+    setTimeout(() => {
+        document.getElementById('primary-weapon').value = build.primary;
+        document.getElementById('secondary-weapon').value = build.secondary;
+        document.getElementById('melee-weapon').value = build.melee;
+        document.getElementById('grenade').value = build.grenade;
+
+        selectedPerks = [...build.perks];
+        
+        document.querySelectorAll('.perk-item').forEach(item => {
+            item.classList.toggle('selected', selectedPerks.includes(item.dataset.perkId));
+        });
+
+        updateAll();
+    }, 100);
+}
+
+
+function togglePerk(perkId, element) {
+    const classData = db.classes[currentClass];
+    const maxPerks = classData.perkSlots;
+    const perkIndex = selectedPerks.indexOf(perkId);
+    
+    if (perkIndex > -1) {
+        selectedPerks.splice(perkIndex, 1);
+        element.classList.remove('selected');
+    } else {
+        if (selectedPerks.length < maxPerks) {
+            selectedPerks.push(perkId);
+            element.classList.add('selected');
+        }
+    }
+    updateAll();
+}
+
+function updateStats() {
+    const classData = db.classes[currentClass];
+    if (!classData) return;
+
+    let health = classData.baseHealth;
+    let armour = classData.baseArmour;
+    let meleeDmg = 0;
+    let rangedDmg = 0;
+    let cooldown = 0;
+
+    selectedPerks.forEach(perkId => {
+        const perk = db.perks[perkId];
+        if(!perk) return;
+        if (perk.health) health += classData.baseHealth * (perk.health / 100);
+        if (perk.armour) armour += classData.baseArmour * (perk.armour / 100);
+        if (perk.meleeDmg) meleeDmg += perk.meleeDmg;
+        if (perk.rangedDmg) rangedDmg += perk.rangedDmg;
+        if (perk.cooldown) cooldown += perk.cooldown;
+    });
+
+    const primary = db.weapons[document.getElementById('primary-weapon').value];
+    if (primary && primary.rangedDmg) rangedDmg += primary.rangedDmg;
+    
+    const melee = db.weapons[document.getElementById('melee-weapon').value];
+    if (melee) {
+      if (melee.meleeDmg) meleeDmg += melee.meleeDmg;
+      if (melee.armour) armour += melee.armour;
+    }
+
+    document.getElementById('stat-health').textContent = Math.round(health);
+    document.getElementById('stat-armour').textContent = Math.round(armour);
+    document.getElementById('stat-melee-dmg').textContent = `+${meleeDmg}%`;
+    document.getElementById('stat-ranged-dmg').textContent = `+${rangedDmg}%`;
+    document.getElementById('stat-cooldown').textContent = `+${cooldown}%`;
+}
+
+function updatePerkCounter() {
+    const classData = db.classes[currentClass];
+    if (!classData) return;
+    document.getElementById('perk-counter').textContent = `Slots: ${selectedPerks.length} / ${classData.perkSlots}`;
+}
+
+function updateDetailsPanel(itemId, itemType) {
+    let itemData, typeText;
+    
+    if (itemType === 'perk') {
+        itemData = db.perks[itemId];
+        if (!itemData) return;
+        typeText = `Perk - Usable by: ${itemData.class}`;
+    } else {
+        itemData = db.weapons[itemId];
+        if (!itemData) return;
+        typeText = `Weapon - Type: ${itemData.type}`;
+    }
+
+    const iconContainer = document.getElementById('detail-icon');
+    iconContainer.innerHTML = db.icons[itemData.icon] || '';
+    
+    document.getElementById('detail-name').textContent = itemData.name || itemId;
+    document.getElementById('detail-type').textContent = typeText;
+    document.getElementById('detail-description').textContent = itemData.description || 'No description available.';
+}
+
+function updateAll() {
+    updateStats();
+    updatePerkCounter();
+}
+</script>
+
+</body>
+</html>
